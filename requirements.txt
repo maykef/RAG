@@ -1,0 +1,7 @@
+chromadb>=0.4.0
+langchain-text-splitters>=0.0.1
+requests>=2.28.0
+rich>=13.0.0
+tqdm>=4.65.0
+marker-pdf>=0.1.0
+pymupdf>=1.23.0
