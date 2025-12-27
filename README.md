@@ -1,31 +1,43 @@
-Scientific RAG Pipeline
+# Scientific RAG Pipeline
+
 A production-ready, high-performance local Retrieval-Augmented Generation (RAG) pipeline optimized for complex scientific documents with multi-column layouts, tables, and mathematical formulas.
-🎯 Target Hardware
-Component	Specification
-CPU	AMD Threadripper 7970X (32-core)
-GPU	NVIDIA RTX PRO 6000 96GB Blackwell
-RAM	256GB ECC RDIMM
-Storage	24TB NVMe Scratch Pool (ZFS)
-OS	Ubuntu 24.04 LTS with CUDA 12.6+
 
-✨ Key Features
-·	Vision-Based Document Parsing: Uses Docling (IBM) with GPU-accelerated table detection and OCR
-·	Markdown-Aware Chunking: Respects document structure (headers, sections) for semantic coherence
-·	High-Quality Embeddings: nomic-embed-text-v1.5 (8192 context, 768 dimensions)
-·	Persistent Vector Storage: ChromaDB on NVMe for fast similarity search
-·	Large LLM Support: Runs Llama 3.1 70B or Qwen 2.5 72B locally via Ollama
-·	Explicit VRAM Management: Stage-based model loading/unloading to avoid OOM
-·	Verification Tools: Built-in chunk inspection and quality verification
-📊 Performance
+## 🎯 Target Hardware
+
+| Component | Specification |
+|-----------|---------------|
+| CPU | AMD Threadripper 7970X (32-core) |
+| GPU | NVIDIA RTX PRO 6000 96GB Blackwell |
+| RAM | 256GB ECC RDIMM |
+| Storage | 24TB NVMe Scratch Pool (ZFS) |
+| OS | Ubuntu 24.04 LTS with CUDA 12.6+ |
+
+## ✨ Key Features
+
+- **Vision-Based Document Parsing**: Uses Docling (IBM) with GPU-accelerated table detection and OCR
+- **Markdown-Aware Chunking**: Respects document structure (headers, sections) for semantic coherence
+- **High-Quality Embeddings**: nomic-embed-text-v1.5 (8192 context, 768 dimensions)
+- **Persistent Vector Storage**: ChromaDB on NVMe for fast similarity search
+- **Large LLM Support**: Runs Llama 3.1 70B or Qwen 2.5 72B locally via Ollama
+- **Explicit VRAM Management**: Stage-based model loading/unloading to avoid OOM
+- **Verification Tools**: Built-in chunk inspection and quality verification
+
+## 📊 Performance
+
 Tested with 19 scientific PDFs:
-Metric	Result
-Ingestion Speed	19 PDFs → 2,608 chunks in ~3.5 minutes
-Query Latency	15-40 seconds (embedding + retrieval + LLM)
-Chunk Size	Mean 862 chars (512-1024 range: 83%)
-VRAM Usage	0.55GB embeddings, ~50GB LLM
 
-🚀 Quick Start
-1. Installation
+| Metric | Result |
+|--------|--------|
+| **Ingestion Speed** | 19 PDFs → 2,608 chunks in ~3.5 minutes |
+| **Query Latency** | 15-40 seconds (embedding + retrieval + LLM) |
+| **Chunk Size** | Mean 862 chars (512-1024 range: 83%) |
+| **VRAM Usage** | 0.55GB embeddings, ~50GB LLM |
+
+## 🚀 Quick Start
+
+### 1. Installation
+
+```bash
 # Clone the repository
 git clone https://github.com/yourusername/scientific-rag-pipeline.git
 cd scientific-rag-pipeline
@@ -33,8 +45,11 @@ cd scientific-rag-pipeline
 # Run the installation script
 chmod +x install_rag_pipeline.sh
 ./install_rag_pipeline.sh
+```
 
 Or install manually:
+
+```bash
 # Create conda environment
 conda create -n rag-pipeline python=3.11 -y
 conda activate rag-pipeline
@@ -48,22 +63,32 @@ pip install -r requirements.txt
 # Install Ollama and pull model
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:70b
+```
 
-2. Configure Storage Paths
-Edit config.yaml to set your NVMe paths:
+### 2. Configure Storage Paths
+
+Edit `config.yaml` to set your NVMe paths:
+
+```yaml
 storage:
   scratch_base: /mnt/nvme8tb
   vector_db_path: /mnt/nvme8tb/vector_store
   cache_path: /mnt/nvme8tb/cache
+```
 
-3. Ingest Documents
+### 3. Ingest Documents
+
+```bash
 # Single document
 python scientific_rag_pipeline.py ingest paper.pdf
 
 # Entire directory
 python scientific_rag_pipeline.py ingest ./documents/ --extensions .pdf
+```
 
-4. Query
+### 4. Query
+
+```bash
 # Start Ollama first
 sudo systemctl start ollama
 
@@ -75,8 +100,11 @@ python scientific_rag_pipeline.py interactive
 
 # When done, free GPU memory
 sudo systemctl stop ollama
+```
 
-📁 Repository Structure
+## 📁 Repository Structure
+
+```
 scientific-rag-pipeline/
 ├── scientific_rag_pipeline.py   # Main pipeline (parsing, chunking, embedding, retrieval, generation)
 ├── verify_rag.py                # Chunk inspection and verification tool
@@ -87,8 +115,11 @@ scientific-rag-pipeline/
 ├── test_installation.py         # Installation verification script
 ├── README.md                    # This file
 └── LICENSE                      # MIT License
+```
 
-🔧 CLI Commands
+## 🔧 CLI Commands
+
+```bash
 # Ingest documents into vector store
 python scientific_rag_pipeline.py ingest <path> [--extensions .pdf .txt]
 
@@ -103,8 +134,11 @@ python scientific_rag_pipeline.py status
 
 # Unload LLM from GPU (free VRAM)
 python scientific_rag_pipeline.py unload
+```
 
-Verification Tool
+### Verification Tool
+
+```bash
 # List all indexed documents
 python verify_rag.py list
 
@@ -122,9 +156,13 @@ python verify_rag.py stats
 
 # Check document coverage
 python verify_rag.py coverage "paper_name"
+```
 
-⚙️ Configuration
-Edit config.yaml to customize:
+## ⚙️ Configuration
+
+Edit `config.yaml` to customize:
+
+```yaml
 # Storage paths (use fast NVMe)
 storage:
   scratch_base: /mnt/nvme8tb
@@ -161,29 +199,40 @@ hardware:
   num_workers: 16
   use_gpu_parsing: true
   clear_vram_between_stages: true
+```
 
-🧠 VRAM Management
+## 🧠 VRAM Management
+
 The pipeline uses explicit stage-based VRAM management:
-Stage	Component	VRAM Usage
-Ingestion	Docling (Vision models)	~3-8 GB
-Ingestion	Embedding Model	~0.6 GB
-Query	Embedding Model	~0.6 GB
-Query	Llama 3.1 70B (Q4)	~50 GB
 
-Important: Ollama keeps models loaded in VRAM for faster subsequent queries. To free GPU memory:
+| Stage | Component | VRAM Usage |
+|-------|-----------|------------|
+| Ingestion | Docling (Vision models) | ~3-8 GB |
+| Ingestion | Embedding Model | ~0.6 GB |
+| Query | Embedding Model | ~0.6 GB |
+| Query | Llama 3.1 70B (Q4) | ~50 GB |
+
+**Important**: Ollama keeps models loaded in VRAM for faster subsequent queries. To free GPU memory:
+
+```bash
 # Stop Ollama service
 sudo systemctl stop ollama
 
 # Or configure auto-unload (add to ~/.bashrc)
 export OLLAMA_KEEP_ALIVE=5m
+```
 
-📚 Supported Document Types
-·	✅ Multi-column academic PDFs
-·	✅ Papers with tables and figures
-·	✅ Mathematical formulas
-·	✅ Mixed text/image layouts
-·	✅ Scanned documents (via OCR)
-🔍 Example Queries
+## 📚 Supported Document Types
+
+- ✅ Multi-column academic PDFs
+- ✅ Papers with tables and figures
+- ✅ Mathematical formulas
+- ✅ Mixed text/image layouts
+- ✅ Scanned documents (via OCR)
+
+## 🔍 Example Queries
+
+```bash
 # Factual questions
 python scientific_rag_pipeline.py query "What crops were domesticated in Amazonia?"
 
@@ -195,8 +244,11 @@ python scientific_rag_pipeline.py query "What evidence exists for prehistoric ag
 
 # Methodology questions
 python scientific_rag_pipeline.py query "What methods were used to analyze phytoliths?"
+```
 
-🐍 Python API
+## 🐍 Python API
+
+```python
 from scientific_rag_pipeline import RAGConfig, ScientificRAGPipeline
 from pathlib import Path
 
@@ -223,9 +275,13 @@ for token in result["answer_stream"]:
 
 # Cleanup
 pipeline.cleanup()
+```
 
-🔧 Troubleshooting
-CUDA Out of Memory
+## 🔧 Troubleshooting
+
+### CUDA Out of Memory
+
+```bash
 # Check current VRAM usage
 nvidia-smi
 
@@ -234,8 +290,11 @@ sudo systemctl stop ollama
 
 # Use smaller model
 # Edit config.yaml: model: llama3.1:8b
+```
 
-Ollama Connection Refused
+### Ollama Connection Refused
+
+```bash
 # Start Ollama service
 sudo systemctl start ollama
 
@@ -244,43 +303,60 @@ ollama list
 
 # Pull model if missing
 ollama pull llama3.1:70b
+```
 
-Slow Ingestion
+### Slow Ingestion
+
+```bash
 # Ensure GPU parsing is enabled
 # Check config.yaml: use_gpu_parsing: true
 
 # Increase workers (up to half your CPU cores)
 # Edit config.yaml: num_workers: 16
+```
 
-Poor Retrieval Quality
+### Poor Retrieval Quality
+
+```bash
 # Inspect chunks to verify content
 python verify_rag.py inspect "document_name" --num 20
 
 # Adjust chunking parameters
 # Increase chunk_size for more context
 # Decrease chunk_overlap if too much redundancy
+```
 
-📈 Model Recommendations
-Embedding Models
-Model	Context	Dimensions	Notes
-nomic-embed-text-v1.5	8192	768	Best balance (recommended)
-bge-large-en-v1.5	512	1024	Good quality, shorter context
-e5-large-v2	512	1024	Alternative option
+## 📈 Model Recommendations
 
-LLM Models (96GB VRAM)
-Model	VRAM	Speed	Quality
-llama3.1:8b	~5 GB	Fast	Good
-llama3.1:70b	~50 GB	Medium	Excellent
-qwen2.5:72b	~50 GB	Medium	Excellent
-llama3.1:70b-q8	~75 GB	Slower	Best
+### Embedding Models
 
-🤝 Contributing
+| Model | Context | Dimensions | Notes |
+|-------|---------|------------|-------|
+| nomic-embed-text-v1.5 | 8192 | 768 | Best balance (recommended) |
+| bge-large-en-v1.5 | 512 | 1024 | Good quality, shorter context |
+| e5-large-v2 | 512 | 1024 | Alternative option |
+
+### LLM Models (96GB VRAM)
+
+| Model | VRAM | Speed | Quality |
+|-------|------|-------|---------|
+| llama3.1:8b | ~5 GB | Fast | Good |
+| llama3.1:70b | ~50 GB | Medium | Excellent |
+| qwen2.5:72b | ~50 GB | Medium | Excellent |
+| llama3.1:70b-q8 | ~75 GB | Slower | Best |
+
+## 🤝 Contributing
+
 Contributions are welcome! Please feel free to submit issues and pull requests.
-📄 License
-MIT License - See LICENSE file for details.
-🙏 Acknowledgments
-·	Docling - IBM's document parsing library
-·	ChromaDB - Vector database
-·	Sentence Transformers - Embedding models
-·	Ollama - Local LLM server
-·	nomic-ai - Embedding model
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Docling](https://github.com/DS4SD/docling) - IBM's document parsing library
+- [ChromaDB](https://github.com/chroma-core/chroma) - Vector database
+- [Sentence Transformers](https://github.com/UKPLab/sentence-transformers) - Embedding models
+- [Ollama](https://github.com/ollama/ollama) - Local LLM server
+- [nomic-ai](https://github.com/nomic-ai) - Embedding model
