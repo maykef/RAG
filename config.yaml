@@ -1,0 +1,163 @@
+# =============================================================================
+# Scientific RAG Pipeline Configuration
+# =============================================================================
+# Hardware Target:
+#   - CPU: AMD Threadripper 7970X (32-core)
+#   - GPU: NVIDIA RTX PRO 6000 96GB Blackwell
+#   - RAM: 256GB ECC RDIMM
+#   - Storage: 24TB NVMe Scratch Pool (ZFS)
+# =============================================================================
+
+# Storage Configuration (NVMe Scratch Pool)
+storage:
+  scratch_base: "/mnt/nvme8tb"
+  vector_db_path: "/mnt/nvme8tb/vector_store"
+  cache_path: "/mnt/nvme8tb/cache"
+  document_cache: "/mnt/nvme8tb/doc_cache"
+  input_documents: "./documents"
+
+# Document Parser Configuration
+parser:
+  # Primary parser: "docling" or "marker"
+  engine: "docling"
+  
+  # GPU acceleration settings
+  use_gpu: true
+  gpu_device: "cuda:0"
+  
+  # OCR settings (for scanned documents)
+  enable_ocr: true
+  ocr_language: "eng"
+  
+  # Table extraction
+  table_extraction:
+    enabled: true
+    mode: "accurate"  # "accurate" or "fast"
+  
+  # Formula detection (experimental)
+  formula_detection: true
+
+# Chunking Configuration
+chunking:
+  # Chunk size in characters
+  chunk_size: 1024
+  
+  # Overlap between chunks
+  chunk_overlap: 128
+  
+  # Minimum chunk size (smaller chunks are discarded)
+  min_chunk_size: 100
+  
+  # Split strategy
+  strategy: "markdown_aware"  # "markdown_aware" or "recursive"
+  
+  # Header levels to split on (for markdown_aware)
+  split_on_headers: [1, 2]
+
+# Embedding Configuration
+embedding:
+  # Model options (ranked by quality):
+  # - "nomic-ai/nomic-embed-text-v1.5" (768d, 8K context, excellent)
+  # - "BAAI/bge-large-en-v1.5" (1024d, 512 context, very good)
+  # - "intfloat/e5-large-v2" (1024d, 512 context, very good)
+  # - "thenlper/gte-large" (1024d, 512 context, good)
+  model: "nomic-ai/nomic-embed-text-v1.5"
+  
+  # Batch size for embedding (tune based on VRAM)
+  batch_size: 64
+  
+  # Device
+  device: "cuda:0"
+  
+  # Normalization
+  normalize: true
+  
+  # Max sequence length (model dependent)
+  max_seq_length: 8192
+
+# Vector Store Configuration
+vector_store:
+  # Backend: "chromadb" or "qdrant"
+  backend: "chromadb"
+  
+  # Collection name
+  collection_name: "scientific_docs"
+  
+  # ChromaDB specific
+  chromadb:
+    distance_metric: "cosine"
+    
+  # Qdrant specific  
+  qdrant:
+    distance_metric: "Cosine"
+    hnsw_m: 16
+    hnsw_ef_construct: 100
+    indexing_threshold: 20000
+
+# LLM Configuration
+llm:
+  # Provider: "ollama" or "vllm"
+  provider: "ollama"
+  
+  # Ollama settings
+  ollama:
+    base_url: "http://localhost:11434"
+    
+    # Model options (for 96GB VRAM):
+    # - "llama3.1:70b-instruct-q4_K_M" (recommended, ~40GB VRAM)
+    # - "llama3.1:70b-instruct-q8_0" (higher quality, ~70GB VRAM)
+    # - "qwen2.5:72b-instruct-q4_K_M" (alternative, ~45GB VRAM)
+    # - "mixtral:8x22b-instruct-v0.1-q4_K_M" (MoE, ~55GB VRAM)
+    model: "llama3.1:70b-instruct-q4_K_M"
+    
+    # Context length
+    context_length: 32768
+    
+    # GPU layers (-1 = all on GPU)
+    num_gpu_layers: -1
+    
+    # Generation parameters
+    temperature: 0.1
+    max_tokens: 2048
+    top_p: 0.9
+    repeat_penalty: 1.1
+
+# Retrieval Configuration
+retrieval:
+  # Number of chunks to retrieve
+  top_k: 8
+  
+  # Minimum similarity score (0.0 - 1.0)
+  similarity_threshold: 0.35
+  
+  # Reranking (optional)
+  rerank:
+    enabled: false
+    model: "BAAI/bge-reranker-large"
+    top_k: 4
+  
+  # Hybrid search (optional)
+  hybrid_search:
+    enabled: false
+    alpha: 0.5  # Balance between dense and sparse
+
+# Hardware Optimization
+hardware:
+  # Number of CPU workers (half of cores recommended)
+  num_workers: 16
+  
+  # Clear VRAM between pipeline stages
+  clear_vram_between_stages: true
+  
+  # Memory mapping for large files
+  use_mmap: true
+  
+  # Torch compile mode for Blackwell GPUs
+  torch_compile: true
+  torch_compile_mode: "reduce-overhead"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  file: null  # Set to path for file logging
